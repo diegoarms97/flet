@@ -1,6 +1,5 @@
 import flet as ft
 from components.sidebar import crear_sidebar
-
 from database.session import db
 from routes import router
 import sys
@@ -27,7 +26,7 @@ def main(page: ft.Page):
     page.title = "Sistema de Control Biométrico"
     page.bgcolor = "#F4F4F4"
     page.padding = 0
-    page.window.height = 720
+    page.window.height = 740
     page.window.width = 1280
     page.window.resizable = False
 
@@ -35,8 +34,14 @@ def main(page: ft.Page):
     content = ft.Container(expand=True)
 
     sidebar = crear_sidebar(content, page, estado_activo)
-    page.add(ft.Row([sidebar, content], expand=True))
+    page.add(
+        ft.Row(
+            [
+                ft.Container(sidebar, expand=1),  # Sidebar ocupa 1 parte
+                ft.Container(content, expand=4),  # Contenido principal ocupa 4 partes
+            ],
+            expand=True
+        )
+    )
 
-    
-
-ft.app(target=main,assets_dir="img")
+ft.app(target=main, assets_dir="img")
