@@ -1,11 +1,12 @@
 import flet as ft
 from components.sidebar import crear_sidebar
-
+from werkzeug.serving import make_server
 from database.session import db
 from routes import router
 import sys
 from pathlib import Path
 from services.init_service import sincronizar_todo
+from services.event_listener import levantar_listening
 # Obtiene la ruta absoluta del directorio raíz
 ROOT_DIR = Path(__file__).parent.absolute()
 
@@ -14,11 +15,12 @@ sys.path.insert(0, str(ROOT_DIR))
 # URL de la base de datos
 DATABASE_URL = "sqlite:///biometric.db"  # O PostgreSQL, etc.
 
-# Instanciar y preparar la base de datos
+# Instanciar y preparar el servidor
 
 
 
 def main(page: ft.Page):
+    
     db.init_db()
     print("tablas creadas")# Crea todas las tablas
     sincronizar_todo()    
