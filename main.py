@@ -5,6 +5,7 @@ from routes import router
 import sys
 from pathlib import Path
 from services.init_service import sincronizar_todo
+
 # Obtiene la ruta absoluta del directorio raíz
 ROOT_DIR = Path(__file__).parent.absolute()
 
@@ -13,7 +14,12 @@ sys.path.insert(0, str(ROOT_DIR))
 # URL de la base de datos
 DATABASE_URL = "sqlite:///biometric.db"  # O PostgreSQL, etc.
 
-# Instanciar y preparar la base de datos
+# thread con el listener
+# en main.py
+
+
+
+
 
 
 
@@ -30,7 +36,7 @@ def main(page: ft.Page):
     page.window.width = 1280
     page.window.resizable = False
 
-    estado_activo = 0
+    estado_activo = True
     content = ft.Container(expand=True)
 
     sidebar = crear_sidebar(content, page, estado_activo)

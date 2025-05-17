@@ -2,21 +2,20 @@ import flet as ft
 import csv
 from fpdf import FPDF
 from view_data_adapters.usuario_view_adapter import obtener_datos_usuarios_para_vista
-
+from services.utilities.parse_fecha import parsear_fecha
 
 def exportar_a_csv(usuarios):
     with open("usuarios_exportados.csv", mode="w", newline="", encoding="utf-8") as archivo:
-        writer = csv.writer(archivo, delimiter=',')  # Aseguramos que usamos coma como delimitador
-        writer.writerow(["Nombre", "Rol", "Última Actividad", "Resultado"])  # Encabezados
+        writer = csv.writer(archivo, delimiter=',')
+        writer.writerow(["Nombre", "Rol", "Última Actividad", "Resultado"])
 
         for usuario in usuarios:
-            writer.writerow([  # Escribir los datos separados por comas
+            writer.writerow([
                 usuario["nombre"],
                 usuario["rol"],
-                usuario["ultima_actividad"],
+                parsear_fecha(usuario["ultima_actividad"]) if usuario["ultima_actividad"] else "",
                 usuario["resultado"]
             ])
-
 
 def exportar_a_pdf(usuarios):
     pdf = FPDF()
@@ -33,12 +32,11 @@ def exportar_a_pdf(usuarios):
     for usuario in usuarios:
         pdf.cell(50, 10, usuario["nombre"], 1)
         pdf.cell(40, 10, usuario["rol"], 1)
-        pdf.cell(60, 10, str(usuario["ultima_actividad"]), 1)
+        pdf.cell(60, 10, str(parsear_fecha(usuario["ultima_actividad"])) if usuario["ultima_actividad"] else "", 1)
         pdf.cell(40, 10, usuario["resultado"], 1)
         pdf.ln()
 
     pdf.output("usuarios_exportados.pdf")
-
 
 def cargar_usuarios(page: ft.Page, content: ft.Container):
     usuarios = obtener_datos_usuarios_para_vista()
@@ -48,65 +46,70 @@ def cargar_usuarios(page: ft.Page, content: ft.Container):
         filas.append(
             ft.DataRow(
                 cells=[
+                    ft.DataCell(ft.Text(usuario["id"], color="black")),
                     ft.DataCell(ft.Text(usuario["nombre"], color="black")),
-                    ft.DataCell(ft.Text(usuario["rol"], color="black")),
-                    ft.DataCell(ft.Text(str(usuario["ultima_actividad"]), color="black")),
-                    ft.DataCell(ft.Text(usuario["resultado"], color="black")),
+                    ft.DataCell(ft.Text(str(usuario["correo"]), color="black")),
+                    ft.DataCell(ft.Text(str(parsear_fecha(usuario["fecha_registro"])), color="black")),
+                    ft.DataCell(ft.Text(usuario["usuario_id"], color="black")),
                 ]
             )
         )
 
     tabla_usuarios = ft.DataTable(
         columns=[
-            ft.DataColumn(ft.Text("Nombre", color="black")),
-            ft.DataColumn(ft.Text("Rol", color="black")),
-            ft.DataColumn(ft.Text("Última Actividad", color="black")),
-            ft.DataColumn(ft.Text("Resultado", color="black"))
+            ft.DataColumn(ft.Text("id", color="black")),
+            ft.DataColumn(ft.Text("nombre", color="black")),
+            ft.DataColumn(ft.Text("correo", color="black")),
+            ft.DataColumn(ft.Text("fecha registro", color="black")),
+            ft.DataColumn(ft.Text("id biométrico", color="black")),
         ],
         rows=filas
     )
 
-    # Crear diálogo de exportación
+    # Snackbar global
+    snack = ft.SnackBar(content=ft.Text(""))
+    page.snack_bar = snack
+
+    def mostrar_snackbar(mensaje):
+        snack.content.value = mensaje
+        snack.open = True
+        page.update()
+
+    # Exportar acciones
     def exportar_pdf(e):
         exportar_a_pdf(usuarios)
         exportar_dialogo.open = False
-        page.snack_bar = ft.SnackBar(content=ft.Text("PDF exportado correctamente"))
-        page.snack_bar.open = True
-        page.update()
+        mostrar_snackbar("PDF exportado correctamente")
 
     def exportar_csv(e):
         exportar_a_csv(usuarios)
         exportar_dialogo.open = False
-        page.snack_bar = ft.SnackBar(content=ft.Text("CSV exportado correctamente"))
-        page.snack_bar.open = True
-        page.update()
+        mostrar_snackbar("CSV exportado correctamente")
 
     def cerrar_dialogo():
         exportar_dialogo.open = False
         page.update()
 
     exportar_dialogo = ft.AlertDialog(
-    modal=True,
-    title=ft.Text("Exportar datos", text_align=ft.TextAlign.CENTER),
-    content=ft.Column(
-        controls=[
-            ft.ElevatedButton("Exportar como PDF", on_click=exportar_pdf),
-            ft.ElevatedButton("Exportar como CSV", on_click=exportar_csv),
+        modal=True,
+        title=ft.Text("Exportar datos", text_align=ft.TextAlign.CENTER),
+        content=ft.Column(
+            controls=[
+                ft.ElevatedButton("Exportar como PDF", on_click=exportar_pdf),
+                ft.ElevatedButton("Exportar como CSV", on_click=exportar_csv),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            tight=True,
+            spacing=10,
+        ),
+        actions=[
+            ft.TextButton("Cancelar", on_click=lambda e: cerrar_dialogo())
         ],
-        alignment=ft.MainAxisAlignment.CENTER,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        tight=True,
-        spacing=10,
-    ),
-    actions=[
-        ft.TextButton("Cancelar", on_click=lambda e: cerrar_dialogo())
-    ],
-    on_dismiss=lambda e: print("Exportación cancelada"),
-)
+        on_dismiss=lambda e: print("Exportación cancelada"),
+    )
 
-    # ⬅️ Esta línea es FUNDAMENTAL para que el diálogo funcione
     page.overlay.append(exportar_dialogo)
-
 
     def mostrar_dialogo_exportar(e):
         print("Botón exportar presionado")
@@ -121,8 +124,8 @@ def cargar_usuarios(page: ft.Page, content: ft.Container):
     # Diseño de la vista
     content.content = ft.Column([
         ft.Row(
-        [ft.Text("Lista de Usuarios", size=20, weight=ft.FontWeight.BOLD, color="#333333")],
-        alignment=ft.MainAxisAlignment.CENTER
+            [ft.Text("Lista de Usuarios", size=20, weight=ft.FontWeight.BOLD, color="#333333")],
+            alignment=ft.MainAxisAlignment.CENTER
         ),
         ft.Row([boton_exportar], alignment=ft.MainAxisAlignment.CENTER),
         ft.Container(

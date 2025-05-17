@@ -1,18 +1,13 @@
 # models/usuario.py
-from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey
-from sqlalchemy.orm import relationship  # Importar relationship aquí
+from sqlalchemy import Column, String, DateTime, Integer
 from database.base import Base
 
 class Usuario(Base):
     __tablename__ = "usuarios"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    nombre = Column(String(100), nullable=False)
-    correo = Column(String(100), unique=True, nullable=False)
-    contrasena = Column(String(255), nullable=False)
-    rol = Column(Enum('Administrador', 'Usuario', name='roles'), nullable=False)
+    usuario_id = Column(String, unique=True, nullable=False)  # ID del biométrico
+    nombre = Column(String)
+    correo = Column(String)
+    fecha_registro = Column(DateTime)
     
-    # Relaciones
-    logs_accesos = relationship("LogAcceso", back_populates="usuario")
-    permisos = relationship("PermisoUsuario", back_populates="usuario")
-    horarios = relationship("Horario", back_populates="usuario")
